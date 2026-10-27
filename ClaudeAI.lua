@@ -13404,7 +13404,7 @@ return function(env)
 		local args = fn and util.decode(fn.arguments or "")
 		if not fn or fn.name ~= "uai_ping" or not args or args.nonce ~= "ok" or util.trim(tool.id) == "" then return end
 		local assistant = { role = "assistant", content = first.content or "", tool_calls = calls }
-		if util.trim(first.reasoning) ~= "" then assistant.reasoning_content = first.reasoning end
+		if false and util.trim(first.reasoning) ~= "" then assistant.reasoning_content = first.reasoning end
 		local second, secondMs = call(record, state, { model = model, stream = false, max_tokens = 128,
 			messages = { { role = "user", content = prompt },
 				assistant,
@@ -16238,8 +16238,6 @@ return function(env)
 				entry.content = tostring(message.content or "")
 			elseif message.role == "assistant" then
 				if message.toolCalls and #message.toolCalls > 0 then
-					-- An assistant turn that called tools must replay those calls
-					-- verbatim, and content may legitimately be an empty string.
 					entry.content = message.content or ""
 					entry.tool_calls = {}
 					for _, call in ipairs(message.toolCalls) do
@@ -16256,10 +16254,6 @@ return function(env)
 					entry.content = message.content
 				else
 					entry.content = tostring(message.content or "")
-				end
-				local reasoning = message.reasoning_content or message.reasoning
-				if type(reasoning) == "string" and util.trim(reasoning) ~= "" then
-					entry.reasoning_content = reasoning
 				end
 			else
 				if type(message.content) == "table" then
@@ -70711,6 +70705,8 @@ return function(env)
 	-- what selects between the conversation and the shared session.
 	local MORE_PANELS = {
 		{ id = "providers", label = "Providers", icon = "sliders" },
+		{ id = "settings", label = "Settings", icon = "gear" },
+		{ id = "logs", label = "Logs & traces", icon = "document" },
 	}
 
 	function M.new(parent, host)
@@ -73430,10 +73426,10 @@ local function start()
 		if found then
 			found.apiKey = KEY
 			found.enabled = true
-			found.label = found.label or "Groq"
-			if not found.model or found.model == "" then
-				found.model = "openai/gpt-oss-120b"
-			end
+			found.label = "Groq"
+			found.baseUrl = "https://api.groq.com/openai/v1"
+			found.model = "openai/gpt-oss-20b"
+			found.models = { "openai/gpt-oss-20b", "openai/gpt-oss-120b" }
 			pcall(function() registry.save(found) end)
 			pcall(function() registry.setActive(found.id) end)
 		else
@@ -73441,8 +73437,9 @@ local function start()
 			rec.apiKey = KEY
 			rec.label = "Groq"
 			rec.enabled = true
-			rec.model = "openai/gpt-oss-120b"
-			rec.models = { "openai/gpt-oss-120b", "openai/gpt-oss-20b" }
+			rec.baseUrl = "https://api.groq.com/openai/v1"
+			rec.model = "openai/gpt-oss-20b"
+			rec.models = { "openai/gpt-oss-20b", "openai/gpt-oss-120b" }
 			pcall(function() registry.save(rec) end)
 			if rec.id and rec.id ~= "" then
 				pcall(function() registry.setActive(rec.id) end)
